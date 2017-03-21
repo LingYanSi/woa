@@ -33,30 +33,31 @@ module.exports = function (dirArr = [], options) {
         }
 
         // 看看有没有匹配到路径前缀
-        let fuck = ''
+        let matchedPathname = ''
         let match = arr.some(item => {
             if (ctx.path.startsWith(`/${item.dirname}/`)) {
-                fuck = item.pathname
+                matchedPathname = item.pathname
                 return true
             }
         })
 
         if (match) {
             try {
-                let filepath = path.resolve(fuck, '.' + ctx.path)
+                let filepath = path.resolve(matchedPathname, '.' + ctx.path)
                 let STATS = fs.statSync(filepath)
 
                 if (STATS.isFile()) {
                     let stream = fs.createReadStream(filepath)
                     let types = mime.lookup(filepath) || 'application/octet-stream'
-                    ctx.response.setHeader('content-type', types)
-                    ctx.response.setHeader('Last-Modified', new Date(STATS.mtime).toUTCString())
-                    ctx.response.setHeader('Cache-Control', `max-age=10000`)
-                    stream.pipe(ctx.response)
+                    ctx.res.setHeader('content-type', types)
+                    ctx.res.setHeader('Last-Modified', new Date(STATS.mtime).toUTCString())
+                    ctx.res.setHeader('Cache-Control', `max-age=10000`)
+                    stream.pipe(ctx.res)
                 } else {
                     ctx.body = 'file not exist'
                 }
             } catch (err) {
+                console.log(err)
                 await next()
             }
 

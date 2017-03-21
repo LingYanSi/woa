@@ -2,7 +2,7 @@
   "name": "woa",
   "version": "0.0.1",
   "description": "a web frame",
-  "main": "app.js",
+  "main": "src/index.js",
   "directories": {
     "test": "test"
   },

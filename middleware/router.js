@@ -3,11 +3,13 @@ module.exports = class Router {
     constructor(){
         this.__routers = []
         ;['get', 'post', 'delete', 'put', 'all'].map(method => {
-            this[method] = (path, callback) => {
+            // 还需处理的是
+            this[method] = (path, ...plugins) => {
                 this.__routers.push({
                     method,
                     path,
-                    callback
+                    plugins: plugins.slice(0, -1),
+                    callback: plugins[plugins.length - 1]
                 })
 
                 return this
@@ -41,18 +43,18 @@ module.exports = class Router {
     }
     routers(){
         return async (ctx, next) => {
-            let handler
+            let callback
+            let plugins
             let fuck = this.__routers.some(item => {
-                let {path, callback, method} = item
 
-                if (method.toUpperCase() != ctx.method.toUpperCase()) return
+                if (item.method.toUpperCase() != ctx.method.toUpperCase()) return
 
                 let params = this.match(ctx.path, item.path)
 
                 if (params && item.callback) {
                     ctx.params = params
-                    handler = callback
-
+                    callback = item.callback
+                    plugins = item.plugins
                     return true
                 }
             })
@@ -60,7 +62,10 @@ module.exports = class Router {
             if (!fuck) {
                 await next()
             } else {
-                await handler(ctx, next)
+                for (let i = 0 ; i < plugins.length ; i++) {
+                    await plugins[i](ctx, next)
+                }
+                await callback(ctx, next)
             }
         }
     }

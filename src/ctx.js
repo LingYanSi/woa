@@ -14,47 +14,53 @@ const parse = require('./parse')
 //   cookie:                      'cid=90676390-0a6c-11e7-b5de-ff4a3e9e5b11; aa=å®å°å¡' }
 
 module.exports = class Ctx {
-    constructor(request, response) {
-        this.request = request
-        this.response = response
+    constructor(req, res) {
+        this.req = req
+        this.res = res
 
         this.handleUrl()
-        this.cookie = parse(request.headers.cookie, ';')
+        this.cookie = parse(req.headers.cookie, ';')
+
+        this.request = {}
 
         this.__setCookieArr = []
 
-        this.method = request.method.toUpperCase()
+        this.method = req.method.toUpperCase()
 
         Object.defineProperty(this, 'body', {
             set: (value) => {
                 // 根据value 类型 及其长度来处理response
-                const {response, __setCookieArr} = this
+                const {res, __setCookieArr} = this
                 // 设置cookie
-                __setCookieArr.length && response.setHeader('Set-Cookie', __setCookieArr)
+                __setCookieArr.length && res.setHeader('Set-Cookie', __setCookieArr)
 
                 // 设置Head
-                response.statusCode = 200
+                res.statusCode = 200
 
-                const contentType = response.getHeader('content-type')
+                const contentType = res.getHeader('content-type')
                 if (!contentType) {
-                    response.setHeader('content-type', 'text/json;charset=utf-8')
+                    res.setHeader('content-type', 'text/json;charset=utf-8')
                 }
 
-                response.end(value)
+                res.end(value)
             }
         })
     }
+    set(key, value){
+        // 处理响应头
+        this.res.setHeader(key, value)
+    }
     // 处理url相关
     handleUrl(){
-        const {request} = this
-        this.protocal = request.httpVersion == '1.1' ? 'http://' : 'https://'
-        this.origin = this.protocal + request.headers.host + request.url
+        const {req} = this
+        this.protocal = req.httpVersion == '1.1' ? 'http://' : 'https://'
+        this.origin = this.protocal + req.headers.host + req.url
         const url = new URL(this.origin)
 
         this.hostname = url.hostname
         this.path = url.pathname
         this.query = url.searchParams
-        this.url = request.url
+        this.url = req.url
     }
     // 设置cookie，然后在请求结束前响应
     setCookie(key, value, maxAge = 100, domain = '', path='/') {

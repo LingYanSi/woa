@@ -15,6 +15,7 @@ class Woa {
         this.MWS = []
     }
     handle(ctx){
+        // 每次http请求，都需要重新生成一个dispatch，因为其对ctx的强依赖
         let dispatch = this.dispatch
         ;[...this.MWS].reverse().forEach(mdw => {
             dispatch = mdw.bind(null, ctx , dispatch)

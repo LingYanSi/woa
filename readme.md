@@ -23,5 +23,8 @@ middleware文件夹下有三个常用中间件
 - router 如理接口请求
 - static 处理静态资源
 
+## test
+node app.js
+
 ## issue
 etc
