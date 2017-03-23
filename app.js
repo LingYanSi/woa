@@ -11,7 +11,9 @@ let router = new Router()
 woa.use(favicon('./favicon.ico'))
 
 // 静态资源，但是从某种角度上来讲，静态资源应该交给cdn去处理
-woa.use(static(['./static/']))
+woa.use(static(['./static/'], {
+    gzip: true
+}))
 
 // 路由控制
 router
@@ -34,7 +36,14 @@ router
 .get('/fuck/:id/:b/*', async (ctx, next) => {
     ctx.body = JSON.stringify(ctx.params)
 })
-.get('*', async (ctx, next) => {
+.get('/redirect', async (ctx, next) => {
+    ctx.setCookie('linianshun', '111')
+    ctx.redirect = '/fuck'
+})
+.get('/jsonp', async (ctx, next) => {
+    ctx.jsonp('hahah')
+})
+.all('*', async (ctx, next) => {
     ctx.body = "favicon()"
 })
 
