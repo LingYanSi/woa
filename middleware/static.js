@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 // 根据文件的后缀名，去判断文件类型，然后查表返回conten-type
 const mime = require('mime-types')
+const zlib = require('zlib')
 
 /**
  * [exports 静态服务]
@@ -24,6 +25,9 @@ module.exports = function (dirArr = [], options) {
 
         return dir
     })
+
+    const useGzip = options.gzip
+    const maxAge = options.maxAge || 0
     // 读取文件夹，然后去匹配
 
     return async (ctx, next) => {
@@ -47,18 +51,31 @@ module.exports = function (dirArr = [], options) {
                 let STATS = fs.statSync(filepath)
 
                 if (STATS.isFile()) {
-                    let stream = fs.createReadStream(filepath)
                     let types = mime.lookup(filepath) || 'application/octet-stream'
+                    // 设置content-type
                     ctx.res.setHeader('content-type', types)
                     ctx.res.setHeader('Last-Modified', new Date(STATS.mtime).toUTCString())
-                    ctx.res.setHeader('Cache-Control', `max-age=10000`)
-                    stream.pipe(ctx.res)
+                    // 设置缓存时间
+                    ctx.res.setHeader('Cache-Control', `max-age=${maxAge}`)
+
+                    let stream = fs.createReadStream(filepath)
+
+                    // 是否开启gzip
+                    if (useGzip) {
+                        const gzip = zlib.createGzip();
+                        ctx.res.setHeader('content-encoding', 'gzip')
+                        stream.pipe(gzip).pipe(ctx.res)
+                    } else {
+                        stream.pipe(ctx.res)
+                    }
+
                 } else {
+                    // 处理文件不存在
                     ctx.body = 'file not exist'
                 }
             } catch (err) {
-                console.log(err)
-                await next()
+                console.log(err) 
+                ctx.body = 'file not exist'
             }
 
         } else {
