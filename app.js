@@ -1,7 +1,7 @@
 const Woa = require('./src/index')
 const woa = new Woa()
 const favicon = require('./middleware/favicon')
-const static = require('./middleware/static')
+const woaStatic = require('./middleware/static')
 const Router = require('./middleware/router')
 const body = require('./middleware/body')
 
@@ -11,8 +11,9 @@ let router = new Router()
 woa.use(favicon('./favicon.ico'))
 
 // 静态资源，但是从某种角度上来讲，静态资源应该交给cdn去处理
-woa.use(static(['./static/'], {
-    gzip: true
+woa.use(woaStatic(['./woaStatic/'], {
+    gzip: true,
+    maxAge: 10000
 }))
 
 // 路由控制
